@@ -1,4 +1,10 @@
 ;
+/*
+ * Allow create tables with fixed THead element
+ * @Repository:     https://github.com/jeancarlo13/FixedTable
+ * @Author:         jeancarlo13
+ * @Lisense:        MIT Lisence (https://opensource.org/licenses/MIT)
+ */
 var fixedTable = fixedTable || (function(){
     'use strict';    
     /*
