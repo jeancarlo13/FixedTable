@@ -15,12 +15,14 @@
         thead {
             background-color: #ccc;
         }
-        .tableContainer{
+        
+        .tableContainer {
             display: block;
             max-height: 500px;
             overflow-y: scroll;
         }
-        code{
+        
+        code {
             display: block;
             background-color: #ccc;
             padding: 25px;
@@ -33,7 +35,8 @@
     <h1>Table with Fixed Header by Javascript</h1>
 
     <h2>Description</h2>
-    <p>This script allow create tables with fixed the THead element, you can provide a parent with scroll or a width and a height used for create the parent element</p>
+    <p>This script allow create tables with fixed the THead element, you can provide a parent with scroll or a width and a height
+        used for create the parent element</p>
 
     <br/>
     <h2>Create a simple table with fixed head</h2>
@@ -1093,7 +1096,7 @@
         <br>
         <br>
         <br>
-        
+
     </div>
     <h2>Create a table with container</h2>
     <code>
@@ -2142,17 +2145,24 @@
         </tbody>
     </table>
     <div>
-        <br />    
-        <br />    
-        <br />    
+        <br />
+        <br />
+        <br />
     </div>
     <h2>License</h2>
     <p>This scripts is licensed with the <a href="https://opensource.org/licenses/MIT">MIT license</a></p>
     <script src="FixedTable.js" type="text/javascript"></script>
-    <script>        
+    <script>
         (function(){
-            fixedTable.simple(document.getElementById('fixedTable'), document.getElementById('tableContainer'));
-            fixedTable.WithoutContainer(document.getElementById('fixedTableWithOutContainer'), '100%', '200px');
+            fixedTable({ 
+                table: document.getElementById('fixedTable'), 
+                container: document.getElementById('tableContainer')
+            });
+            fixedTable({
+                table: document.getElementById('fixedTableWithOutContainer'), 
+                maxWidth: '100%', 
+                maxHeight: '200px'
+            });
         })();
     </script>
 </body>
