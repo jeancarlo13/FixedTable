@@ -47,7 +47,13 @@
         <br />
         &nbsp;&nbsp;&nbsp;(function(){
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fixedTable.simple(document.getElementById('fixedTable'), document.getElementById('tableContainer'));
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fixedTable({ 
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;table: document.getElementById('fixedTable'), 
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;container: document.getElementById('tableContainer')
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});
             <br />
         &nbsp;&nbsp;&nbsp;})();
         <br />
@@ -57,16 +63,6 @@
     <div id="tableContainer" class="tableContainer">
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="scrollTable" id='fixedTable'>
             <thead class="fixedHeader">
-                <tr>
-                    <th>Header 1</th>
-                    <th>Header 2</th>
-                    <th>Header 3</th>
-                </tr>
-                <tr>
-                    <th>Header 1</th>
-                    <th>Header 2</th>
-                    <th>Header 3</th>
-                </tr>
                 <tr>
                     <th>Header 1</th>
                     <th>Header 2</th>
@@ -1090,12 +1086,6 @@
 
     <div>
         <br>
-        <br>
-        <br>
-        <br>
-        <br>
-        <br>
-        <br>
 
     </div>
     <h2>Create a table with container</h2>
@@ -1106,7 +1096,15 @@
         <br />
         &nbsp;&nbsp;&nbsp;(function(){
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fixedTable.WithoutContainer(document.getElementById('fixedTableWithOutContainer'), '100%', '200px');
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fixedTable({
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;table: document.getElementById('fixedTableWithOutContainer'), 
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maxWidth: '100%', 
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maxHeight: '200px'
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});
             <br />
         &nbsp;&nbsp;&nbsp;})();
         <br />
@@ -2144,6 +2142,227 @@
             </tr>
         </tbody>
     </table>
+    <br/>
+    <h2>Create a table with fixed head with rows and cells combined </h2>
+    <code>
+        &lt;script src="FixedTable.js" type="text/javascript"&gt;&lt;/script&gt;        
+        <br />
+        &lt;script&gt;
+        <br />
+        &nbsp;&nbsp;&nbsp;(function(){
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fixedTable({
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;table: document.getElementById('combinedCells'), 
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maxWidth: '100%', 
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maxHeight: '200px',
+            <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;modelRowIndex: 3
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});
+            <br />
+        &nbsp;&nbsp;&nbsp;})();
+        <br />
+        &lt;/script&gt;
+    </code>
+    <br/>
+    <table id="combinedCells">
+        <thead>
+            <tr>
+                <th>Cell 1-a</th>
+                <th rowspan="2">Cell 1,2-b</th>
+                <th>Cell 2</th>
+                <th>Cell 3</th>
+                <th>Cell 4</th>
+                <th>Cell 5</th>
+            </tr>
+            <tr>
+                <th>Cell 1-a</th>
+                <th>Cell 2</th>
+                <th colspan="2">Cell 3</th>
+                <th>Cell 4</th>
+            </tr>
+            <tr>
+                <th colspan="2">Cell 1</th>
+                <th>Cell 2</th>
+                <th colspan="2">Cell 3</th>
+                <th>Cell 4</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Cell 1-a</td>
+                <td>Cell 1-b</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td>Cell 1-a</td>
+                <td rowspan="2">Cell 1,2-b</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td>Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td colspan="2">Cell 4</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+            <tr>
+                <td colspan="2">Cell 1</td>
+                <td>Cell 2</td>
+                <td>Cell 3</td>
+                <td>Cell 4</td>
+                <td>Cell 5</td>
+            </tr>
+        </tbody>
+    </table>
     <div>
         <br />
         <br />
@@ -2162,6 +2381,12 @@
                 table: document.getElementById('fixedTableWithOutContainer'), 
                 maxWidth: '100%', 
                 maxHeight: '200px'
+            });
+            fixedTable({
+                table: document.getElementById('combinedCells'), 
+                maxWidth: '100%', 
+                maxHeight: '200px',
+                modelRowIndex: 3
             });
         })();
     </script>
