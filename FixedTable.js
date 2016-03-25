@@ -5,7 +5,7 @@
  * @Author:         jeancarlo13
  * @Lisense:        MIT Lisence (https://opensource.org/licenses/MIT)
  */
-var fixedTable = fixedTable || (function() {
+var fixedTable = fixedTable || (function () {
     'use strict';
     /*
      * Represent the sides of an element    
@@ -23,100 +23,155 @@ var fixedTable = fixedTable || (function() {
      * Tables marked for fixed head, where each object contains:
      *      {Table}     table:  The table that you want fix the THead
      *      {Element}   parent: The parent element with scroll
-     *      {bool}      oldState:   The last visibility state registred    
+     *      {bool}      headIsVisible:   The last visibility state registred    
      */
-    var _tables = [];
-    /*
-     * Check if the client rectangle is visible on screen
-     * @param {DOM element} element:    The DOM element you want to know the visibility
-     * @param {int|_sides}  side:       The site you want desired know the visibility.
-     * @param {DOM element} parent:   The element that contains to the table and have scroll in y    
-     */
-    function isElementInViewport(element, side, parent) {
-        var rect = element.getBoundingClientRect();
-        var parentRect = parent.getBoundingClientRect();
-        var parentTop = 0 + parentRect.top;
+    var _tables = [],
+        /*
+        * is realy? Firefox not get real width of elements
+        */
+        _isFirefox = typeof InstallTrigger !== 'undefined';
 
-        if (side === _sides.Top) {
-            return rect.top >= parentTop;
-        } else if (side === _sides.Right) {
-            return rect.right <= (parent.innerWidth || parent.clientWidth); //or $(window).width()
-        } else if (side === _sides.Bottom) {
-            return rect.bottom <= (parent.innerHeight || parent.clientHeight); //or $(window).height() 
-        } else if (side === _sides.Left) {
-            return rect.left >= 0;
-        } else if (side === _sides.Any) {
-            return rect.top >= parentTop
-                || rect.left >= 0
-                || rect.bottom <= (parent.innerHeight || parent.clientHeight) /*or $(window).height() */
-                || rect.right <= (parent.innerWidth || parent.clientWidth); /*or $(window).width() */
-        } else if (side === _sides.AnyVerticalPart) {
-            return rect.bottom >= 0
-                || (
-                    rect.top >= parentTop
-                    && rect.top <= (parent.innerHeight || parent.clientHeight) //or $(window).height()
-                );
-        } else {
-            // console.log('all', { top: rect.top, left: rect.left, bottom: rect.bottom, right: rect.right});
-            return rect.top >= parentTop
-                && rect.left >= 0
-                && rect.bottom <= (parent.innerHeight || parent.clientHeight) /*or $(window).height() */
-                && rect.right <= (parent.innerWidth || parent.clientWidth); /*or $(window).width() */
+    /*
+    * Check if the element part is visible into the viewport
+    * @param    {DOM element}   element:    Element use for check is is visible
+    * @param    {int}           side:       Part of element to check, use _side enumeration
+    * @param    {DOM element}   parent:     Element that contains the desired element; use undefined for use the viewport
+    * @return   {bool}          True if the element part is visible; False another case 
+    */
+    function isElementVisibleInViewport(element, side, parent) {
+        function between(value, min, max) {
+            return value >= min && value <= max;
+        }
+
+        var elementPosition = getAbsolutePosition(element),
+            viewportPosition = parent ? getAbsolutePosition(parent) : getViewportAbsolutePosition();
+
+        // Element is more small that viewport
+        var topVisible = between(elementPosition.top, viewportPosition.top, viewportPosition.buttom),
+            rightVisible = between(elementPosition.right, viewportPosition.left, viewportPosition.right),
+            buttomVisible = between(elementPosition.buttom, viewportPosition.top, viewportPosition.buttom),
+            leftVisible = between(elementPosition.left, viewportPosition.left, viewportPosition.right);
+
+        // Viewport is more small that the element
+        var viewportTopVisible = between(viewportPosition.top, elementPosition.top, elementPosition.buttom),
+            viewportRightVisible = between(viewportPosition.right, elementPosition.left, elementPosition.right),
+            viewportButtomVisible = between(viewportPosition.buttom, elementPosition.top, elementPosition.buttom),
+            viewportLeftVisible = between(viewportPosition.left, elementPosition.left, elementPosition.right);
+
+        switch (side) {
+            case _sides.all:
+                return topVisible && rightVisible && buttomVisible && leftVisible;
+            case _sides.Top:
+                return topVisible;
+            case _sides.Right:
+                return rightVisible;
+            case _sides.Left:
+                return leftVisible;
+            case _sides.Any:
+                return topVisible || rightVisible || buttomVisible || leftVisible
+                    || viewportTopVisible || viewportRightVisible || viewportButtomVisible || viewportLeftVisible;
+            case _sides.AnyVerticalPart:
+                return topVisible || buttomVisible
+                    || viewportTopVisible || viewportButtomVisible;
+            default:
+                return false;
         }
     }
     /*
-     * Review the visibility of the table into the parent with scroll
-     * @param {Object}  obj:    Contains the elements of the table to modify, the properties are:
-     *                          {Table}     table:  The table that you want fix the THead
-     *                          {Element}   parent: The parent element with scroll
-     *                          {bool}      oldState:   The last visibility state registred          
-     */
-    function reviewScroll(obj) {
-        var thead = obj.table.querySelector('thead');
-        var tbodys = Array.prototype.slice.call(obj.table.querySelectorAll('tbody'));
+    * Return the absolute position of the viewport into the document
+    * @return {Object}                  Object with the absolute coordinates          
+    */
+    function getViewportAbsolutePosition() {
+        return getAbsolutePosition(undefined);
+    }
+    /*
+    * Return the absolute position of an element into the document
+    * @param {DOM Element}  element:    Element to use for determine your position
+    * @return {Object}                  Object with the absolute coordinates, undefined for use viewport          
+    */
+    function getAbsolutePosition(element) {
+        var rect = undefined,
+            body = document.body,
+            voidElement = element === undefined;
 
-        var isVisible =
-            (
-                (
-                    isElementInViewport(obj.table, _sides.Top, obj.parent)
-                    || !isElementInViewport(obj.table, _sides.AnyVerticalPart, obj.parent)
-                )
-                && isElementInViewport(thead, _sides.All, obj.parent)
-            )
-            || obj.parent.scrollTop <= 16
-            ;
-        var parentTop = obj.parent.getBoundingClientRect().top + 'px';
-        if (obj.oldState !== isVisible) {
-            thead.style.position = isVisible === true ? '' : 'fixed';
-            
-            var ths = Array.prototype.slice.call(thead.querySelector('tr').querySelectorAll('th, td'));
-
-            var widths = [];
-            if (isVisible !== true) {
-                var tds = Array.prototype.slice.call(tbodys[0].querySelector('tr').querySelectorAll('th, td'));
-                tds.forEach(function(td, index) {
-                     widths.push(td.offsetWidth);
-                });
-            }
-            
-            ths.forEach(function(th, index) {
-                th.style.width = isVisible === true ? '' : widths[index] + 'px';
-            })
-
-            tbodys.forEach(function(body) {
-                var tds = Array.prototype.slice.call(body.querySelector('tr').querySelectorAll('th, td'));
-                tds.forEach(function(td, index) {
-                    td.style.width = isVisible === true ? '' : widths[index] + 'px';
-                });
-            });
-
-            thead.style.width = isVisible === true ? '' : obj.table.offsetWidth + 'px';
-            thead.style.top = isVisible === true ? '' : parentTop;
-        } else if (!isVisible && thead.style.top !== parentTop) {
-            thead.style.top = parentTop
+        if (voidElement) {
+            // check viewport
+            element = document.createElement('div');
+            element.style.position = 'fixed';
+            element.style.width = '100%';
+            element.style.height = '100%';
+            body.appendChild(element);
         }
 
-        obj.oldState = isVisible;
+        rect = element.getBoundingClientRect();
+
+        if (voidElement) {
+            body.removeChild(element);
+        }
+
+        return {
+            top: rect.top + body.scrollTop,
+            right: rect.left + rect.width + body.scrollLeft,
+            buttom: rect.top + body.scrollTop + rect.height,
+            left: rect.left + body.scrollLeft
+        };
+    }
+    /*
+     * Review the visibility of the table into the parent with scroll
+     * @param {Object}  table:    Contains the elements of the table to modify, the properties are:
+     *                          {Table}     table:  The table that you want fix the THead
+     *                          {Element}   parent: The parent element with scroll
+     *                          {bool}      headIsVisible:   The last visibility state registred          
+     */
+    function reviewScroll(table) {        
+        var isVisible = isElementVisibleInViewport(table.parent, _sides.Any, undefined),
+            thead = table.table.querySelector('thead');
+
+        if (isVisible) {
+            isVisible = isElementVisibleInViewport(table.table, _sides.Top, table.parent);
+
+            if (isVisible != table.headIsVisible || this.type === "resize") {
+                isVisible === true ? unSetFixedStyle(thead) : setFixedStyle(table.table);
+                table.headIsVisible = isVisible;
+            }
+            
+            thead.style.top = isVisible === true ? '' : table.parent.getBoundingClientRect().top + 'px';
+        } 
+        
+        if (isVisible != table.parentIsVisible) {
+            table.parentIsVisible = isVisible;
+        }
+    }
+    /*
+    * Clear the fixed style at the received thead element
+    * @param    {thead element} thead:  Thead of html that will clear the fixed style
+    */
+    function unSetFixedStyle(thead){
+        var ths = Array.prototype.slice.call(thead.querySelector('tr').querySelectorAll('th, td'));
+        thead.style.position = '';
+        ths.forEach(function (th, index) {
+            th.style.width = '';
+            th.style.minWidth = '';
+        })
+        thead.style.width = '';
+    }
+    /*
+    * Set the style to thead of the received table in Fixed
+    * @param    {Table element} table:  Table of html that will the fixed style
+    */
+    function setFixedStyle(table) {
+        var thead = table.querySelector('thead'),
+            tbodys = Array.prototype.slice.call(table.querySelectorAll('tbody')),
+            tds = Array.prototype.slice.call(tbodys[0].querySelector('tr').querySelectorAll('th, td')),
+            ths = Array.prototype.slice.call(thead.querySelector('tr').querySelectorAll('th, td'));
+            
+        
+        thead.style.position = 'fixed';
+        tds.forEach(function (td, index) {
+            ths[index].style.width = (_isFirefox? (td.offsetWidth + td.scrollWidth + td.getBoundingClientRect().width) / 3 : td.offsetWidth) + 'px';
+            ths[index].style.minWidth = ths[index].style.width;
+        });
+        thead.style.width = table.getBoundingClientRect().width + 'px';
     }
     /*
     * Fix the thead of the desired table if this is not visible
@@ -124,28 +179,37 @@ var fixedTable = fixedTable || (function() {
     * @param {DOM element} parent:   The element that contains to the table and have scroll in y
     */
     function fixedTable(table, parent) {
-        var tableObj = {
-            table: table,
-            parent: parent,
-            oldState: true
-        };
-        _tables.push(tableObj);
+        var head = table.querySelector('thead'),
+            tableObj = {
+                table: table,
+                parent: parent,
+                headIsVisible: isElementVisibleInViewport(table, _sides.Top, parent),
+                parentIsVisible: isElementVisibleInViewport(parent, _sides.Any, undefined),
+            };
 
-        tableObj.parent.addEventListener(
-            'scroll',
-            function() {
-                reviewScroll(tableObj);
-            },
-            true);
-
+        var elements = Array.prototype.slice.call( tableObj.parent.querySelectorAll('*'));
+        elements.forEach(function(e) { e.style.boxSizing = 'border-box'; });
         tableObj.parent.scrollTop = 0;
+        tableObj.parent.style.overflowX = 'hidden';
+        tableObj.parent.style.paddingRight = '1px';       
+
+        _tables.push(tableObj);
+    }
+    /*
+    * Add the event listeners to the parent of the table for set the fixed head
+    * @param {DOM element}  element:    Element of the DOM to use for add the event listeners
+    *        {function}     callback:   Function to call when occurs the event   
+    */
+    function addEventListeners(element, callback) {
+        element.addEventListener('scroll', callback, true);
+        element.addEventListener('resize', callback, true);
     }
 
     /*
     * Fix the thead of the desired table if this is not visible
     * @param {DOM element}  table:      The table of the you want fix the thead
-    * @param {string}         maxWidth:   The max width of the container element, sample: 100px, 100%
-    * @param {string}         maxHeight:  The max height of the container element, sample: 100px, 100%
+    * @param {string}       maxWidth:   The max width of the container element, sample: 100px, 100%
+    * @param {string}       maxHeight:  The max height of the container element, sample: 100px, 100%
     */
     function fixedTableWithoutContainer(table, maxWidth, maxHeight) {
         var parent = document.createElement('div');
@@ -174,26 +238,20 @@ var fixedTable = fixedTable || (function() {
     }
 
     // add an event handler to the document scroll for adjust the position of the fixed THead
-    document.addEventListener(
-        'scroll',
-        function() {
-            _tables.forEach(reviewScroll);
-        },
-        true);
-
-    // return {
-    //     simple: fixedTable,
-    //     WithoutContainer: fixedTableWithoutContainer
-    // };
-    return function(options) {
-        var config = {
+    addEventListeners(window, function documentListener(e) {
+        e.preventDefault();
+        _tables.forEach(function (t) { reviewScroll.call(e, t); });
+    });
+    
+    return function (options) {
+        var defaultOptions = {
             table: undefined,
             container: undefined,
             maxWidth: '100%',
             maxHeight: '300px'
         };
 
-        config = merge(config, options);
+        var config = merge(defaultOptions, options);
 
         if (config.table === undefined) {
             throw "Table element not provided";
