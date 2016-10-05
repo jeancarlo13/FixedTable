@@ -162,10 +162,25 @@ var fixedTable = fixedTable || (function () {
     function setFixedStyle(table, rowIndex) {
         var thead = table.querySelector('thead'),
             tbodys = Array.prototype.slice.call(table.querySelectorAll('tbody')),
-            tds = Array.prototype.slice.call(tbodys[0].querySelector('tr:nth-child(' + rowIndex + ')').querySelectorAll('th, td')),
+            visibleRows = rowIndex <= 1 ? Array.prototype.slice.call(tbodys[0].querySelectorAll('tr')).filter(function(tr) { return tr.style.display !== 'none'; }) : undefined,            
+            fromVisibleRows = rowIndex <= 1 && visibleRows.length > 0,
+            tds = fromVisibleRows === true 
+                ? Array.prototype.slice.call(visibleRows[0].querySelectorAll('th, td'))
+                : Array.prototype.slice.call(tbodys[0].querySelector('tr:nth-child(' + rowIndex + ')').querySelectorAll('th, td')),
             ths = Array.prototype.slice.call(thead.querySelector('tr').querySelectorAll('th, td'));
             
-        
+        if (fromVisibleRows === true){
+            tds.forEach(function (td, index) {
+                var th = ths[index]; 
+                td.style.width = 
+                    (_isFirefox 
+                        ? (th.offsetWidth + th.scrollWidth + th.getBoundingClientRect().width) / 3 
+                        : th.offsetWidth
+                    ) + 'px';
+                td.style.minWidth = td.style.width;
+            });
+        }
+
         thead.style.position = 'fixed';
         tds.forEach(function (td, index) {
             ths[index].style.width = 
@@ -283,3 +298,4 @@ var fixedTable = fixedTable || (function () {
         }
     };
 })();
+    
