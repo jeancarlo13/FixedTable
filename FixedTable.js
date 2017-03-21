@@ -3,6 +3,7 @@
  * Allow create tables with fixed THead element
  * @Repository:     https://github.com/jeancarlo13/FixedTable
  * @Author:         jeancarlo13
+ * @Contributions:  Thanks to Alejandro Chávez
  * @Lisense:        MIT Lisence (https://opensource.org/licenses/MIT)
  */
 var fixedTable = fixedTable || (function () {
@@ -78,6 +79,14 @@ var fixedTable = fixedTable || (function () {
         }
     }
     /**
+     * Check if the element provided is visible on screen
+     * @param    {DOM Element}          element:    Element provided to check his visibility on screen
+     * @return {bool}                   True if the element provided is visible on screen; otherwise false.
+     */
+    function isElementVisibleOnScreen(element) {
+        return element.offsetParent !== null;
+    }
+    /**
      * Return the absolute position of the viewport into the document
      * @return {Object}                  Object with the absolute coordinates          
      */
@@ -124,18 +133,27 @@ var fixedTable = fixedTable || (function () {
      *                          {bool}      headIsVisible:   The last visibility state registred          
      */
     function reviewScroll(table) {        
-        var isVisible = isElementVisibleInViewport(table.parent, _sides.Any, undefined),
-            thead = table.table.querySelector('thead');
+        var isVisible = isElementVisibleInViewport(table.parent, _sides.Any, undefined) && isElementVisibleOnScreen(table.parent),
+            thead = table.table.querySelector('thead'),
+            offset = 0;
 
         if (isVisible) {
             isVisible = isElementVisibleInViewport(table.table, _sides.Top, table.parent);
 
-            if (isVisible != table.headIsVisible || this.type === "resize") {
-                isVisible === true ? unSetFixedStyle(thead) : setFixedStyle(table.table, table.modelRowIndex);
+            if (isVisible != table.headIsVisible) {
+                isVisible === true ? unSetFixedStyle(thead, table.modelHeaderIndex) : setFixedStyle(table.table, table.modelRowIndex, table.modelHeaderIndex);
+                table.headIsVisible = isVisible;
+            } else if (this.type === "resize") {
+                unSetFixedStyle(thead, table.modelHeaderIndex);
+                setFixedStyle(table.table, table.modelRowIndex, table.modelHeaderIndex);
                 table.headIsVisible = isVisible;
             }
             
-            thead.style.top = isVisible === true ? '' : table.parent.getBoundingClientRect().top + 'px';
+            if (document.body.classList.contains('modal-open')) {
+                offset = thead.clientHeight;
+            }
+
+            thead.style.top = isVisible === true ? '' : (table.parent.getBoundingClientRect().top - offset) + 'px';
         } 
         
         if (isVisible != table.parentIsVisible) {
@@ -146,8 +164,8 @@ var fixedTable = fixedTable || (function () {
      * Clear the fixed style at the received thead element
      * @param    {thead element} thead:  Thead of html that will clear the fixed style
      */
-    function unSetFixedStyle(thead){
-        var ths = Array.prototype.slice.call(thead.querySelector('tr').querySelectorAll('th, td'));
+    function unSetFixedStyle(thead, headerIndex){
+        var ths = Array.prototype.slice.call(thead.querySelector('tr:nth-child(' + headerIndex + ')').querySelectorAll('th, td'));
         thead.style.position = '';
         ths.forEach(function (th, index) {
             th.style.width = '';
@@ -159,17 +177,23 @@ var fixedTable = fixedTable || (function () {
      * Set the style to thead of the received table in Fixed
      * @param    {Table element} table:  Table of html that will the fixed style
      */
-    function setFixedStyle(table, rowIndex) {
+    function setFixedStyle(table, rowIndex, headerIndex) {
         var thead = table.querySelector('thead'),
             tbodys = Array.prototype.slice.call(table.querySelectorAll('tbody')),
-            visibleRows = rowIndex <= 1 ? Array.prototype.slice.call(tbodys[0].querySelectorAll('tr')).filter(function(tr) { return tr.style.display !== 'none'; }) : undefined,            
+            visibleRows = rowIndex <= 1 ? Array.prototype.slice.call(tbodys[0].querySelectorAll('tr')).filter(function (tr) { return tr.style.display !== 'none' && !tr.classList.contains('ghostRow'); }) : Array.prototype.slice.call(tbodys[0].querySelectorAll('tr')),
             fromVisibleRows = rowIndex <= 1 && visibleRows.length > 0,
             tds = fromVisibleRows === true 
-                ? Array.prototype.slice.call(visibleRows[0].querySelectorAll('th, td'))
+                ? (visibleRows.length > 0 ? Array.prototype.slice.call(visibleRows[0].querySelectorAll('th, td')) : [])
                 : Array.prototype.slice.call(tbodys[0].querySelector('tr:nth-child(' + rowIndex + ')').querySelectorAll('th, td')),
-            ths = Array.prototype.slice.call(thead.querySelector('tr').querySelectorAll('th, td'));
+            ths = Array.prototype.slice.call(thead.querySelector('tr:nth-child(' + headerIndex + ')').querySelectorAll('th, td'));
             
-        if (fromVisibleRows === true){
+        if(table.lastRow){
+            Array.prototype.slice.call( table.lastRow.querySelectorAll('th, td')).forEach(function (td) {
+                td.style.width = 'auto'; td.style.minWidth = '0';
+            });
+        }
+        if (fromVisibleRows === true) {
+            table.lastRow = visibleRows[0];
             tds.forEach(function (td, index) {
                 var th = ths[index]; 
                 td.style.width = 
@@ -198,14 +222,15 @@ var fixedTable = fixedTable || (function () {
      * @param {DOM element} parent:   The element that contains to the table and have scroll in y
      * @param {int}          modelRowIndex: Index based-zero of the row of the tbody to use for determinate the cell sizes
      */
-    function fixedTable(table, parent, modelRowIndex) {
+    function fixedTable(table, parent, modelRowIndex, modelHeaderIndex) {
         var head = table.querySelector('thead'),
             tableObj = {
                 table: table,
                 parent: parent,
                 headIsVisible: isElementVisibleInViewport(table, _sides.Top, parent),
                 parentIsVisible: isElementVisibleInViewport(parent, _sides.Any, undefined),
-                modelRowIndex: modelRowIndex ? modelRowIndex + 1 : 1
+                modelRowIndex: modelRowIndex ? modelRowIndex + 1 : 1,
+                modelHeaderIndex: modelHeaderIndex ? modelHeaderIndex + 1 : 1
             };
 
         var elements = Array.prototype.slice.call( tableObj.parent.querySelectorAll('*'));
@@ -216,6 +241,13 @@ var fixedTable = fixedTable || (function () {
         tableObj.table.cellPadding = 0;
         tableObj.table.cellSpacing = 0;  
         tableObj.table.style.width = '100%';     
+
+        // add an event handler to the document scroll for adjust the position of the fixed THead
+        addEventListeners(tableObj.parent, function tableListener(e) {
+            e.preventDefault();
+            setGhostHeader.call(e, tableObj);
+            reviewScroll.call(e, tableObj);
+        });
 
         _tables.push(tableObj);
     }
@@ -236,14 +268,14 @@ var fixedTable = fixedTable || (function () {
      * @param {string}       maxHeight:  The max height of the container element, sample: 100px, 100%
      * @param {int}          modelRowIndex: Index based-zero of the row of the tbody to use for determinate the cell sizes
      */
-    function fixedTableWithoutContainer(table, maxWidth, maxHeight, modelRowIndex) {
+    function fixedTableWithoutContainer(table, maxWidth, maxHeight, modelRowIndex, modelHeaderIndex) {
         var parent = document.createElement('div');
         parent.style.width = maxWidth;
         parent.style.height = maxHeight;
         parent.style.overflow = 'auto';
         table.parentNode.insertBefore(parent, table);
         parent.appendChild(table);
-        fixedTable(table, parent, modelRowIndex);
+        fixedTable(table, parent, modelRowIndex, modelHeaderIndex);
     }
     /**
      * Overwrites obj1's values with obj2's and adds obj2's if non existent in obj1
@@ -261,12 +293,45 @@ var fixedTable = fixedTable || (function () {
         }
         return obj3;
     }
-
-    // add an event handler to the document scroll for adjust the position of the fixed THead
+    // add the event listener to know if the target of scroll or resize is the parent of table
     addEventListeners(window, function documentListener(e) {
-        e.preventDefault();
-        _tables.forEach(function (t) { reviewScroll.call(e, t); });
+        _tables.forEach(function callback(t) {
+            setScrollInTop.call(e, t)
+        });
     });
+    /*
+     * handle the the event to only make scroll or resize on parent table 
+     * @param { DOMObject } table: represents an object with data of table to handle scroll or resize event
+     */
+    function setScrollInTop(table) {
+        var target = this.target || this.srcElement;
+        if (target !== table.parent) {
+            table.parent.scrollTop = 0;
+        }
+    }
+    /*
+     * check if table is higher than container but diference not exceed the header height
+     */
+    function setGhostHeader(table) {
+        var table = table.table,
+            container = table.parentNode,
+            thead = table.querySelector('thead'),
+            difference = container.clientHeight < table.clientHeight ? table.clientHeight - container.clientHeight : 0,
+            ghostRow = table.querySelector('tbody > tr.ghostRow'),
+            tbody = table.querySelector('tbody');
+        if(container.scrollTop === 0) {
+            if (ghostRow !== null) {
+                ghostRow.remove();
+            }
+        }
+        else if (difference !== 0 && difference < thead.clientHeight && ghostRow == null) {
+            ghostRow = tbody.insertRow(0);
+            ghostRow.classList.add('ghostRow');
+            ghostRow.style.height = thead.clientHeight + 'px';
+            ghostRow.innerHTML = thead.rows;
+            container.scrollTop = container.scrollHeight;
+        }
+    }
     
     /**
      * Set the features of fixed table at the received table
@@ -276,7 +341,9 @@ var fixedTable = fixedTable || (function () {
      *                               {float}         maxWidth:   Max width of the container used when not exist an container for the table
      *                               {float}         maxHeight:  Max height of the container used when not exist an container for the table
      *                               {int}           modelRowIndex: Index based-zero (default = 0) of the row of the tbody to use for determinate the cell sizes, 
-     *                                                              the row shuld match with the first row of the thead
+     *                                                              the row should match with the first row of the thead
+     *                               {int}           modelHeaderIndex: Index based-zero (default = 0) of the row of the thead to use to set size with 
+     *                                                              row matched with modelRowIndex
      */
     return function (options) {
         var defaultOptions = {
@@ -284,7 +351,8 @@ var fixedTable = fixedTable || (function () {
             container: undefined,
             maxWidth: '100%',
             maxHeight: '300px',
-            modelRowIndex: 0
+            modelRowIndex: 0,
+            modelHeaderIndex: 0
         };
 
         var config = merge(defaultOptions, options);
@@ -292,9 +360,9 @@ var fixedTable = fixedTable || (function () {
         if (config.table === undefined) {
             throw "Table element not provided";
         } else if (config.container) {
-            fixedTable(config.table, config.container, config.modelRowIndex);
+            fixedTable(config.table, config.container, config.modelRowIndex, config.modelHeaderIndex);
         } else {
-            fixedTableWithoutContainer(config.table, config.maxWidth, config.maxHeight, config.modelRowIndex);
+            fixedTableWithoutContainer(config.table, config.maxWidth, config.maxHeight, config.modelRowIndex, config.modelHeaderIndex);
         }
     };
 })();
