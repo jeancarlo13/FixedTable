@@ -14,7 +14,7 @@ This script allow create tables with fixed the THead element, you can provide a 
 </ul>
 
 <h3>Samples</h3>
-For samples view the <a href="http://jctools.mx/tablas-con-titulos-fijos">FixedTable.htm<a> file
+For samples view the <a href="http://jctools.mx/show/tablas-con-t-tulos-fijos-fixed-table">FixedTable.htm<a> file
 
 <h4>License</h4>
 This scripts is licensed with the <a href="https://opensource.org/licenses/MIT">MIT license</a>
